@@ -7,6 +7,7 @@ const socket = io("http://localhost:5000");
 
 function App() {
   const [id, setId] = useState<string>("");
+  const [idSend, setIdSend] = useState<string>("");
   const [stream, setStream] = useState<any>();
   const [call, setCall] = useState({
     from: null,
@@ -16,7 +17,9 @@ function App() {
   });
 
   const subscribePath = () => {
+    console.log(`callUser/${id}`);
     socket.on(`callUser/${id}`, ({ from, name: callerName, signal }) => {
+      console.log(1);
       setCall({ isReceivingCall: true, from, name: callerName, signal });
     });
   };
@@ -26,7 +29,7 @@ function App() {
 
     peer.on("signal", (data) => {
       socket.emit("callUser", {
-        userToCall: id,
+        userToCall: idSend,
         signalData: data,
         from: "",
         name: "",
@@ -67,6 +70,7 @@ function App() {
   return (
     <div className="App">
       <input value={id} onChange={(e) => setId(e.target.value)} />
+      <input value={idSend} onChange={(e) => setIdSend(e.target.value)} />
       <button onClick={subscribePath}>Subscribe Path</button>
       <button onClick={callUser}>Call User</button>
       <button onClick={answerCall}>Answer Call</button>
