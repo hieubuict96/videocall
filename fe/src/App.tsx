@@ -44,6 +44,7 @@ function App() {
     });
 
     peer.on("stream", (currentStream) => {
+      console.log(currentStream);
       userVideo.current.srcObject = currentStream;
     });
 
@@ -62,6 +63,7 @@ function App() {
     });
 
     peer.on("stream", (currentStream) => {
+      console.log(currentStream);
       userVideo.current.srcObject = currentStream;
     });
 
@@ -71,7 +73,7 @@ function App() {
 
   useEffect(() => {
     navigator.mediaDevices
-      .getUserMedia({ video: false, audio: true })
+      .getUserMedia({ video: true, audio: true })
       .then((currentStream) => {
         setStream(currentStream);
         myVideo.current.srcObject = currentStream;
