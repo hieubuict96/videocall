@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.scss";
 import { io } from "socket.io-client";
 import Peer from "simple-peer";
@@ -16,10 +16,16 @@ function App() {
     name: null,
   });
 
+  const myVideo = useRef<any>();
+  const userVideo = useRef<any>();
+  const connectionRef = useRef<any>();
+
   const subscribePath = () => {
-    console.log(`callUser/${id}`);
-    socket.on(`callUser/${id}`, ({ from, name: callerName, signal }) => {
-      console.log(1);
+    socket.emit('subscribe', {
+      id
+    });
+
+    socket.on(`callUser`, ({ from, name: callerName, signal }) => {
       setCall({ isReceivingCall: true, from, name: callerName, signal });
     });
   };
@@ -28,6 +34,7 @@ function App() {
     const peer = new Peer({ initiator: true, trickle: false, stream });
 
     peer.on("signal", (data) => {
+      console.log(data);
       socket.emit("callUser", {
         userToCall: idSend,
         signalData: data,
@@ -37,33 +44,37 @@ function App() {
     });
 
     peer.on("stream", (currentStream) => {
-      console.log(currentStream);
+      userVideo.current.srcObject = currentStream;
     });
 
     socket.on("callAccepted", (signal) => {
       peer.signal(signal);
     });
+
+    connectionRef.current = peer;
   };
 
   const answerCall = () => {
     const peer = new Peer({ initiator: false, trickle: false, stream });
 
     peer.on("signal", (data) => {
-      socket.emit("answerCall", { signal: data, to: call.from });
+      socket.emit("answerCall", { signal: data, to: idSend });
     });
 
     peer.on("stream", (currentStream) => {
-      console.log(currentStream);
+      userVideo.current.srcObject = currentStream;
     });
 
     peer.signal(call.signal);
+    connectionRef.current = peer;
   };
 
   useEffect(() => {
     navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
+      .getUserMedia({ video: false, audio: true })
       .then((currentStream) => {
         setStream(currentStream);
+        myVideo.current.srcObject = currentStream;
       });
   }, []);
 
@@ -74,6 +85,11 @@ function App() {
       <button onClick={subscribePath}>Subscribe Path</button>
       <button onClick={callUser}>Call User</button>
       <button onClick={answerCall}>Answer Call</button>
+
+      <div>
+        <video playsInline muted ref={myVideo} autoPlay />
+        <video playsInline ref={userVideo} autoPlay />
+      </div>
     </div>
   );
 }
